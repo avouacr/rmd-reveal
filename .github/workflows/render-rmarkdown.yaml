@@ -1,0 +1,41 @@
+# Workflow derived from https://github.com/r-lib/actions/tree/master/examples 
+## Need help debugging build failures ? Start at https://github.com/r-lib/actions#where-to-find-help
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    # paths: 
+    #   - '**.Rmd'
+    #   - '**.qmd'
+
+name: render-rmarkdown
+
+jobs:
+  build-deploy:
+    runs-on: macos-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - uses: r-lib/actions/setup-r@v1
+      - uses: r-lib/actions/setup-pandoc@v1
+
+      - name: Install R packages
+        run: |
+          Rscript -e 'install.packages(c("rmarkdown", "revealjs"))'
+
+      - name: Render Rmd
+        run: |
+          Rscript -e "rmarkdown::render('tutorials/tuto_presentation.Rmd')"
+      
+      - name: Move files to build directory
+        run: |
+          mkdir public
+          cp tutorials/tuto_presentation.html public/index.html
+      - name: Push to gh-pages branch
+        uses: crazy-max/ghaction-github-pages@v2
+        with:
+          target_branch: gh-pages
+          build_dir: public
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
